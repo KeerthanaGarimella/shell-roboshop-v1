@@ -5,7 +5,7 @@ instance_type="t3.micro"
 domain_name="daws92s.space"
 hosted_zone_id="Z0731054138SF68GPGDXV"
 
-for instance in $@
+for instance in "$@"
 do
     echo "creating instance : $instance"
 
@@ -18,43 +18,49 @@ do
         --output text)
 
     echo "$instance id : $instance_id"
-     
-     if [$instance != "frontend"] ;then
-       IP=$(aws ec2 describe-instances \
-        --instance-ids "$instance_id" \ 
-        --query "Reservations[0].Instances[0].PrivateIpAddress" \
-        --output text
-        )
-         r53_record= "$instance.$domain_name"
-        else
+
+    aws ec2 wait instance-running --instance-ids "$instance_id"
+
+    if [ "$instance" != "frontend" ]; then
 
         IP=$(aws ec2 describe-instances \
-        --instance-ids "$instance_id" \ 
-        --query "Reservations[0].Instances[0].PublicIpAddress" \
-        --output text
-        )
-        r53_record= "$domain_name"
-     fi
+            --instance-ids "$instance_id" \
+            --query "Reservations[0].Instances[0].PrivateIpAddress" \
+            --output text)
 
-     #update route 53 record
-       
-   aws route53 change-resource-record-sets \
-  --hosted-zone-id $hosted_zone_id \
-  --change-batch '{
-  "Changes": [
-    {
-      "Action": "UPSERT",
-      "ResourceRecordSet": {
-        "Name": "$r53_record_name",
-        "Type": "A",
-        "TTL": 300,
-        "ResourceRecords": [
-          {
-            "Value": "$IP"
-          }
-        ]
-      }
-    }
-  ]
-}'
+        r53_record="$instance.$domain_name"
+
+    else
+
+        IP=$(aws ec2 describe-instances \
+            --instance-ids "$instance_id" \
+            --query "Reservations[0].Instances[0].PublicIpAddress" \
+            --output text)
+
+        r53_record="$domain_name"
+
+    fi
+
+    # update route 53 record
+
+    aws route53 change-resource-record-sets \
+        --hosted-zone-id "$hosted_zone_id" \
+        --change-batch "{
+            \"Changes\": [
+                {
+                    \"Action\": \"UPSERT\",
+                    \"ResourceRecordSet\": {
+                        \"Name\": \"$r53_record\",
+                        \"Type\": \"A\",
+                        \"TTL\": 300,
+                        \"ResourceRecords\": [
+                            {
+                                \"Value\": \"$IP\"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }"
+
 done
