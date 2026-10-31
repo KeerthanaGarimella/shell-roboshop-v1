@@ -1,0 +1,24 @@
+[Unit]
+Description=RoboShop User Service
+After=network.target
+
+[Service]
+Type=simple
+User=roboshop
+Group=roboshop
+
+WorkingDirectory=/app
+
+Environment="MONGO_URL=mongodb://mongodb.DOMAIN_NAME:27017/users"
+Environment="REDIS_URL=redis://redis.DOMAIN_NAME:6379"
+
+ExecStart=/usr/bin/node /app/server.js
+
+Restart=always
+RestartSec=5
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
