@@ -4,11 +4,12 @@ After=network-online.target
 
 [Service]
 User=roboshop
-Environment=CART_ENDPOINT=cart.DOMAIN_NAME:8080
-Environment=DB_HOST=mysql.DOMAIN_NAME
+WorkingDirectory=/app
+Environment=CART_ENDPOINT=cart.daws-92s.space:8080
+Environment=DB_HOST=mysql.daws-92s.space
 Environment=DB_USER=shipping
 Environment=DB_PASSWORD=RoboShop@1
-ExecStart=/bin/java -jar /app/shipping.jar
+ExecStart=/usr/bin/java -jar /app/shipping.jar
 SyslogIdentifier=shipping
 Restart=on-failure
 RestartSec=5
